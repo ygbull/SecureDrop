@@ -1,0 +1,24 @@
+name = "secure-drop-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[vars]
+MAX_FILE_SIZE = "104857600"
+DEFAULT_EXPIRY = "86400"
+ALLOWED_ORIGIN = "https://your-domain.com"
+
+[[r2_buckets]]
+binding = "DROPS_BUCKET"
+bucket_name = "secure-drops"
+
+[[kv_namespaces]]
+binding = "DROPS_META"
+id = "YOUR_KV_NAMESPACE_ID"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "secure-drop-db"
+database_id = "YOUR_D1_DATABASE_ID"
+
+[triggers]
+crons = ["0 * * * *"]
