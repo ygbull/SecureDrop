@@ -23,14 +23,19 @@ export default function ShareLink({
   const [showQr, setShowQr] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [copyFlash, setCopyFlash] = useState(false);
 
   const handleCopy = useCallback(async () => {
-    await navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setCopyFlash(true);
-    setTimeout(() => setCopied(false), 2000);
-    setTimeout(() => setCopyFlash(false), 600);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setCopyFlash(true);
+      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopyFlash(false), 600);
+    } catch {
+      // Link is rendered in a select-all div as fallback
+    }
   }, [shareUrl]);
 
   const handleQr = useCallback(async () => {
@@ -47,10 +52,13 @@ export default function ShareLink({
 
   const handleDelete = useCallback(async () => {
     setDeleting(true);
+    setDeleteError(null);
     try {
       await deleteDrop(dropId, deleteToken);
       setDeleted(true);
-    } catch {
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete");
+    } finally {
       setDeleting(false);
     }
   }, [dropId, deleteToken]);
@@ -146,6 +154,9 @@ export default function ShareLink({
       </div>
 
       {/* Delete */}
+      {deleteError && (
+        <p className="text-error text-sm text-center">{deleteError}</p>
+      )}
       <button
         onClick={handleDelete}
         disabled={deleting}
