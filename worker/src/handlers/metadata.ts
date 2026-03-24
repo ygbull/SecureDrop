@@ -1,9 +1,13 @@
 import type { Context } from "hono";
 import type { Env } from "../types";
 import type { DropMetadata } from "../../../shared/types";
+import { isValidDropId } from "../utils/validate";
 
 export async function handleMetadata(c: Context<{ Bindings: Env }>) {
   const id = c.req.param("id");
+  if (!id || !isValidDropId(id)) {
+    return c.json({ error: "invalid_id" }, 400);
+  }
 
   const kvRaw = await c.env.DROPS_META.get(`drop:${id}`);
   if (!kvRaw) {

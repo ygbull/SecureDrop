@@ -1,6 +1,8 @@
 import type { Context } from "hono";
 import type { Env } from "../types";
 import type { DropMetadata } from "../../../shared/types";
+import { WIRE_CHUNK_SIZE } from "../../../shared/constants";
+import { isValidDropId } from "../utils/validate";
 
 export async function handleUploadPart(c: Context<{ Bindings: Env }>) {
   const dropId = c.req.query("dropId");
@@ -8,6 +10,10 @@ export async function handleUploadPart(c: Context<{ Bindings: Env }>) {
 
   if (!dropId || !partNumberStr) {
     return c.json({ error: "missing_params" }, 400);
+  }
+
+  if (!isValidDropId(dropId)) {
+    return c.json({ error: "invalid_id" }, 400);
   }
 
   const partNumber = parseInt(partNumberStr, 10);
@@ -31,6 +37,9 @@ export async function handleUploadPart(c: Context<{ Bindings: Env }>) {
 
   const key = `drops/${dropId}/chunk-${String(partNumber).padStart(3, "0")}`;
   const body = await c.req.arrayBuffer();
+  if (body.byteLength === 0 || body.byteLength > WIRE_CHUNK_SIZE) {
+    return c.json({ error: "invalid_chunk_size" }, 413);
+  }
   await c.env.DROPS_BUCKET.put(key, body);
 
   return c.json({ partNumber });

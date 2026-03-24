@@ -2,9 +2,13 @@ import type { Context } from "hono";
 import type { Env } from "../types";
 import type { DropMetadata } from "../../../shared/types";
 import { generateId } from "../utils/id";
+import { isValidDropId } from "../utils/validate";
 
 export async function handleClaim(c: Context<{ Bindings: Env }>) {
   const id = c.req.param("id");
+  if (!id || !isValidDropId(id)) {
+    return c.json({ error: "invalid_id" }, 400);
+  }
 
   const kvRaw = await c.env.DROPS_META.get(`drop:${id}`);
   if (!kvRaw) {
@@ -37,25 +41,9 @@ export async function handleClaim(c: Context<{ Bindings: Env }>) {
     .first<{ downloads: number; max_downloads: number; exhausted_at: string | null }>();
 
   if (!result) {
-    const fallback = await c.env.DB.prepare(
-      "SELECT downloads, max_downloads FROM drops WHERE id = ?"
-    )
-      .bind(id)
-      .first<{ downloads: number; max_downloads: number }>();
-
-    if (!fallback) {
-      return c.json({ error: "gone", allowed: false, downloads: 0, maxDownloads: 0, downloadToken: "" }, 404);
-    }
-
     return c.json(
-      {
-        allowed: false,
-        error: "exhausted" as const,
-        downloads: fallback.downloads,
-        maxDownloads: fallback.max_downloads,
-        downloadToken: "",
-      },
-      410
+      { error: "gone" as const, allowed: false, downloads: 0, maxDownloads: 0, downloadToken: "" },
+      404
     );
   }
 

@@ -95,9 +95,9 @@ export default function DownloadPage() {
       triggerDownload(blob, meta.fileName);
       setPhase("done");
     } catch (err) {
-      if (err instanceof Error && (err.message === "exhausted" || err.message === "gone")) {
+      if (err instanceof ApiError && (err.status === 404 || err.status === 410)) {
         setPhase("burned");
-      } else if (err instanceof ApiError && (err.status === 410)) {
+      } else if (err instanceof Error && err.message === "gone") {
         setPhase("burned");
       } else {
         setError(err instanceof Error ? err.message : "Download failed");

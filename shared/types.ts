@@ -50,7 +50,7 @@ export interface ClaimResponse {
   downloads: number;
   maxDownloads: number;
   downloadToken: string;
-  error?: "exhausted" | "gone";
+  error?: "gone";
 }
 
 export interface DecryptedMetadata {

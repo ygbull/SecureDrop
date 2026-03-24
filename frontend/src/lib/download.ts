@@ -67,7 +67,7 @@ export async function decryptAndDownload(
   // Claim download
   const claimResult = await claim(dropId);
   if (!claimResult.allowed) {
-    throw new Error(claimResult.error === "exhausted" ? "exhausted" : "gone");
+    throw new Error("gone");
   }
 
   // Download encrypted blob

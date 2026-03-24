@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { Env } from "../types";
 import type { DropMetadata } from "../../../shared/types";
+import { isValidDropId, isValidToken } from "../utils/validate";
 import {
   WIRE_CHUNK_SIZE,
   PLAINTEXT_CHUNK_SIZE,
@@ -10,10 +11,16 @@ import {
 
 export async function handleDownload(c: Context<{ Bindings: Env }>) {
   const id = c.req.param("id");
-  const token = c.req.query("token");
+  if (!id || !isValidDropId(id)) {
+    return c.json({ error: "invalid_id" }, 400);
+  }
 
+  const token = c.req.query("token");
   if (!token) {
     return c.json({ error: "missing_token" }, 403);
+  }
+  if (!isValidToken(token)) {
+    return c.json({ error: "invalid_token" }, 403);
   }
 
   const tokenKey = `dl:${id}:${token}`;

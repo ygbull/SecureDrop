@@ -23,7 +23,7 @@ export async function rateLimit(c: Context<{ Bindings: Env }>, next: Next) {
   if (!match) return next();
 
   const { action, ttl } = match[1];
-  const ip = c.req.header("X-Real-IP") ?? c.req.header("CF-Connecting-IP") ?? "unknown";
+  const ip = c.req.header("CF-Connecting-IP") ?? "unknown";
 
   // For resource-specific endpoints, scope the rate limit to the resource ID
   // so rate limiting one drop doesn't block operations on other drops.

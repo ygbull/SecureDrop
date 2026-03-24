@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { Env } from "../types";
 import type { InitUploadRequest, DropMetadata } from "../../../shared/types";
+import { PLAINTEXT_CHUNK_SIZE } from "../../../shared/constants";
 import { generateId } from "../utils/id";
 
 const VALID_EXPIRY = [3600, 86400, 604800];
@@ -21,6 +22,10 @@ export async function handleInitUpload(c: Context<{ Bindings: Env }>) {
   }
   if (!body.totalChunks || body.totalChunks < 1 || body.totalChunks > 50) {
     return c.json({ error: "invalid_total_chunks" }, 400);
+  }
+  const expectedChunks = Math.ceil(body.fileSize / PLAINTEXT_CHUNK_SIZE);
+  if (body.totalChunks !== expectedChunks) {
+    return c.json({ error: "chunk_count_mismatch" }, 400);
   }
   if (!body.meta || !body.metaIv) {
     return c.json({ error: "missing_metadata" }, 400);

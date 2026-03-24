@@ -10,7 +10,7 @@ function uniqueIp(): string {
 }
 
 function rlHeaders(): Record<string, string> {
-  return { "X-Real-IP": uniqueIp() };
+  return { "CF-Connecting-IP": uniqueIp() };
 }
 
 function pass(name: string, detail = "") {
@@ -191,16 +191,16 @@ async function test6_claimFirst(
 async function test7_claimSecond(dropId: string) {
   const name = "claim: second claim fails";
   const res = await fetch(`${BASE}/claim/${dropId}`, { method: "POST", headers: rlHeaders() });
-  if (res.status !== 410) {
-    fail(name, `expected 410, got ${res.status}`);
+  if (res.status !== 404) {
+    fail(name, `expected 404, got ${res.status}`);
     await res.text();
     return;
   }
   const body = await res.json<{ allowed: boolean; error: string }>();
-  if (body.allowed !== false || body.error !== "exhausted") {
+  if (body.allowed !== false || body.error !== "gone") {
     fail(name, `unexpected body: ${JSON.stringify(body)}`);
   } else {
-    pass(name, `410, exhausted`);
+    pass(name, `404, gone`);
   }
 }
 
@@ -211,7 +211,7 @@ async function createAndFinalizeDrop(
   const ip = uniqueIp();
   const res = await fetch(`${BASE}/init-upload`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Real-IP": ip },
+    headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip },
     body: JSON.stringify({
       meta: toBase64("fake-meta"),
       metaIv: toBase64("fake-iv-12byte"),
@@ -292,7 +292,7 @@ async function test10_deleteWrongToken() {
 
   const res = await fetch(`${BASE}/drop/${dropId}`, {
     method: "DELETE",
-    headers: { "X-Delete-Token": "wrong-token-value", ...rlHeaders() },
+    headers: { "X-Delete-Token": "aaaBBBcccDDD1234", ...rlHeaders() },
   });
   if (res.status !== 403) {
     fail(name, `expected 403, got ${res.status}`);
@@ -335,7 +335,7 @@ async function test12_rateLimit() {
   // First call with this IP should succeed
   const res1 = await fetch(`${BASE}/init-upload`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Real-IP": sameIp },
+    headers: { "Content-Type": "application/json", "CF-Connecting-IP": sameIp },
     body,
   });
   await res1.text();
@@ -343,7 +343,7 @@ async function test12_rateLimit() {
   // Second call with same IP should be rate-limited
   const res2 = await fetch(`${BASE}/init-upload`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Real-IP": sameIp },
+    headers: { "Content-Type": "application/json", "CF-Connecting-IP": sameIp },
     body,
   });
 
@@ -384,7 +384,7 @@ async function test13_unlimitedDownloads() {
 async function test14_uploadPartInvalidDrop() {
   const name = "upload-part: invalid drop";
   const res = await fetch(
-    `${BASE}/upload-part?dropId=nonexistent&partNumber=1`,
+    `${BASE}/upload-part?dropId=zZzZzZzZ&partNumber=1`,
     {
       method: "POST",
       headers: { "Content-Type": "application/octet-stream" },
@@ -401,6 +401,7 @@ async function test14_uploadPartInvalidDrop() {
 
 async function test15_finalizeMismatch() {
   const name = "finalize: parts count mismatch";
+  // fileSize 4194305 needs 3 chunks: ceil(4194305 / 2097152) = 3
   const initRes = await fetch(`${BASE}/init-upload`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...rlHeaders() },
@@ -410,7 +411,7 @@ async function test15_finalizeMismatch() {
       expiry: 86400,
       maxDownloads: 1,
       totalChunks: 3,
-      fileSize: 3000,
+      fileSize: 4194305,
     }),
   });
   const { dropId } = await initRes.json<{ dropId: string }>();
@@ -460,7 +461,7 @@ async function test17_downloadInvalidToken() {
   const name = "download: invalid token";
   const { dropId } = await createAndFinalizeDrop(1, 1);
 
-  const res = await fetch(`${BASE}/dl/${dropId}?token=bogus-invalid-token`, { headers: rlHeaders() });
+  const res = await fetch(`${BASE}/dl/${dropId}?token=aaaBBBcccDDD1234`, { headers: rlHeaders() });
   if (res.status !== 403) {
     fail(name, `expected 403, got ${res.status}`);
   } else {

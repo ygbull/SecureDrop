@@ -1,12 +1,16 @@
 import type { Context } from "hono";
 import type { Env } from "../types";
 import type { DropMetadata, FinalizeRequest } from "../../../shared/types";
+import { isValidDropId } from "../utils/validate";
 
 export async function handleFinalize(c: Context<{ Bindings: Env }>) {
   const body = await c.req.json<FinalizeRequest>();
 
   if (!body.dropId) {
     return c.json({ error: "missing_drop_id" }, 400);
+  }
+  if (!isValidDropId(body.dropId)) {
+    return c.json({ error: "invalid_id" }, 400);
   }
 
   const kvRaw = await c.env.DROPS_META.get(`drop:${body.dropId}`);
