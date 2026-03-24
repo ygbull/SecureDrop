@@ -26,10 +26,11 @@ export default function Options({
   return (
     <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <label className="text-sm text-text-secondary font-medium">
+        <label htmlFor="expiry-select" className="text-sm text-text-secondary font-medium">
           Expires after
         </label>
         <select
+          id="expiry-select"
           value={expiry}
           onChange={(e) => onExpiryChange(Number(e.target.value))}
           disabled={disabled}
@@ -44,10 +45,11 @@ export default function Options({
       </div>
 
       <div className="flex items-center justify-between">
-        <label className="text-sm text-text-secondary font-medium">
+        <label htmlFor="download-limit-select" className="text-sm text-text-secondary font-medium">
           Download limit
         </label>
         <select
+          id="download-limit-select"
           value={maxDownloads}
           onChange={(e) => onMaxDownloadsChange(Number(e.target.value))}
           disabled={disabled}
@@ -68,6 +70,9 @@ export default function Options({
           </label>
           <button
             type="button"
+            role="switch"
+            aria-checked={passwordEnabled}
+            aria-label="Toggle password protection"
             onClick={() => onPasswordToggle(!passwordEnabled)}
             disabled={disabled}
             className={`

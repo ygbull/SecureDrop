@@ -60,9 +60,23 @@ export default function DropZone({ onFileSelected, disabled }: DropZoneProps) {
     [validateAndSelect]
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        if (!disabled) inputRef.current?.click();
+      }
+    },
+    [disabled]
+  );
+
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label="Select a file to upload, or drop a file here"
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragEnter={handleDragOver}

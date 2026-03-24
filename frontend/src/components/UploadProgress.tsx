@@ -41,16 +41,29 @@ export default function UploadProgress({
         )}
       </div>
 
-      <div className="w-full h-2 bg-bg rounded-full overflow-hidden">
-        {phase === "finalizing" ? (
+      {phase === "finalizing" ? (
+        <div
+          className="w-full h-2 bg-bg rounded-full overflow-hidden"
+          role="progressbar"
+          aria-label="Finalizing upload"
+        >
           <div className="h-full w-full animate-shimmer bg-accent/30 rounded-full" />
-        ) : (
+        </div>
+      ) : (
+        <div
+          className="w-full h-2 bg-bg rounded-full overflow-hidden"
+          role="progressbar"
+          aria-valuenow={progress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Upload progress"
+        >
           <div
             className="h-full progress-fill rounded-full transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       {error && (
         <div className="mt-3 p-3 rounded-lg bg-error/10 border border-error/20">

@@ -1,4 +1,4 @@
-import { importKey, decryptChunk, decryptMetadata, deriveWrappingKey, unwrapFileKey, fromBase64Url, fromBase64 } from "./crypto";
+import { importKey, decryptChunk, decryptMetadata, deriveWrappingKey, unwrapFileKey, fromBase64Url } from "./crypto";
 import { rechunkEncryptedStream } from "./chunker";
 import { getMeta, claim, downloadBlob } from "./api";
 import type { DecryptedMetadata, MetaResponse } from "@shared/types";

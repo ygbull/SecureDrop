@@ -11,7 +11,7 @@ export async function handleScheduledCleanup(env: Env) {
   }
 
   // Clean up expired drops (8-day threshold)
-  const expired = await env.DB.prepare(
+  await env.DB.prepare(
     "DELETE FROM drops WHERE created_at < datetime('now', '-8 days')"
   ).run();
 

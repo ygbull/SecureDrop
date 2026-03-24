@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   generateKey,
-  exportKey,
-  importKey,
   encryptChunk,
   decryptChunk,
   encryptMetadata,

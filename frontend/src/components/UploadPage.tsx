@@ -134,6 +134,7 @@ export default function UploadPage() {
               </div>
               <button
                 onClick={() => setFile(null)}
+                aria-label="Remove file"
                 className="ml-3 text-text-tertiary hover:text-text-primary transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

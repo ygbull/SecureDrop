@@ -1,4 +1,4 @@
-import { generateKey, exportKey, encryptChunk, encryptMetadata, deriveWrappingKey, wrapFileKey, toBase64Url, toBase64 } from "./crypto";
+import { generateKey, exportKey, encryptChunk, encryptMetadata, deriveWrappingKey, wrapFileKey, toBase64Url } from "./crypto";
 import { chunkFile, calculateTotalChunks } from "./chunker";
 import { initUpload, uploadPart, finalize } from "./api";
 import type { DecryptedMetadata } from "@shared/types";

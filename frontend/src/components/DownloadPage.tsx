@@ -142,6 +142,7 @@ export default function DownloadPage() {
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
             placeholder="Enter password"
+            aria-label="Password for encrypted file"
             className="w-full bg-surface-hover border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent"
             autoFocus
           />
@@ -188,7 +189,14 @@ export default function DownloadPage() {
           <p className="text-text-secondary text-sm font-medium">
             Decrypting chunk {progress.current} / {progress.total}
           </p>
-          <div className="w-full h-2 bg-bg rounded-full overflow-hidden">
+          <div
+            className="w-full h-2 bg-bg rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuenow={progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Download and decrypt progress"
+          >
             <div
               className="h-full progress-fill rounded-full transition-all duration-300"
               style={{
