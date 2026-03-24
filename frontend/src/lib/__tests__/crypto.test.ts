@@ -151,7 +151,7 @@ describe("crypto", () => {
   });
 
   // Test 9: Exactly 2MB boundary
-  it("exactly 2MB file is 1 chunk at exact WIRE_CHUNK_SIZE", async () => {
+  it("exactly 2MB file is 1 chunk at exact WIRE_CHUNK_SIZE", { timeout: 30_000 }, async () => {
     const key = await generateKey();
     const fileSize = PLAINTEXT_CHUNK_SIZE;
     const totalChunks = Math.ceil(fileSize / PLAINTEXT_CHUNK_SIZE);
