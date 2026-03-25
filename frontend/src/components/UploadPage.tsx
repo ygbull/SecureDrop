@@ -3,7 +3,7 @@ import DropZone from "./DropZone";
 import Options from "./Options";
 import UploadProgress from "./UploadProgress";
 import ShareLink from "./ShareLink";
-import { handleUpload, type UploadProgress as UploadProgressState, type UploadResult } from "../lib/upload";
+import { handleUpload, validateUploadOptions, type UploadProgress as UploadProgressState, type UploadResult } from "../lib/upload";
 import { formatFileSize } from "../lib/utils";
 
 type Phase = "idle" | "uploading" | "done" | "error";
@@ -33,7 +33,8 @@ export default function UploadPage() {
   }, []);
 
   const handleStartUpload = useCallback(async () => {
-    if (!file) return;
+    const validationError = validateUploadOptions({ file, passwordEnabled, password });
+    if (validationError || !file) return;
 
     setPhase("uploading");
     setErrorMessage(null);
@@ -167,7 +168,7 @@ export default function UploadPage() {
           <div className="animate-fadeInUp delay-3">
             <button
               onClick={handleStartUpload}
-              disabled={!file}
+              disabled={!file || (passwordEnabled && !password.trim())}
               className={`
                 w-full py-3 rounded-lg font-medium text-sm transition-all duration-200
                 ${file

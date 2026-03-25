@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router";
 import BurnNotice from "./BurnNotice";
 import { fetchMetadata, prepareKey, unlockWithPassword, decryptAndDownload, triggerDownload } from "../lib/download";
@@ -11,7 +11,11 @@ type Phase = "loading" | "password" | "ready" | "downloading" | "done" | "burned
 
 export default function DownloadPage() {
   const { id: dropId } = useParams<{ id: string }>();
-  const keyRef = useRef<string | null>(null);
+  const [fragment] = useState(() => window.location.hash.slice(1));
+
+  useEffect(() => {
+    history.replaceState(null, "", window.location.pathname);
+  }, []);
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [metaResponse, setMetaResponse] = useState<MetaResponse | null>(null);
@@ -21,19 +25,14 @@ export default function DownloadPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
+  const [burnMessage, setBurnMessage] = useState<string | undefined>();
 
-  // Strip fragment immediately on mount
   useEffect(() => {
-    const fragment = window.location.hash.slice(1);
-    history.replaceState(null, "", window.location.pathname);
-
     if (!fragment) {
       setError("Missing decryption key in URL");
       setPhase("error");
       return;
     }
-
-    keyRef.current = fragment;
 
     if (!dropId) {
       setPhase("burned");
@@ -55,7 +54,10 @@ export default function DownloadPage() {
           setPhase("ready");
         }
       } catch (err) {
-        if (err instanceof ApiError && (err.status === 404 || err.status === 410)) {
+        if (err instanceof ApiError && err.status === 410) {
+          setBurnMessage("This file has reached its download limit and is no longer available.");
+          setPhase("burned");
+        } else if (err instanceof ApiError && err.status === 404) {
           setPhase("burned");
         } else {
           setError(err instanceof Error ? err.message : String(err));
@@ -63,14 +65,14 @@ export default function DownloadPage() {
         }
       }
     })();
-  }, [dropId]);
+  }, [dropId, fragment]);
 
   const handlePasswordSubmit = useCallback(async () => {
-    if (!keyRef.current || !metaResponse?.salt || !dropId) return;
+    if (!fragment || !metaResponse?.salt || !dropId) return;
     setPasswordError(null);
 
     try {
-      const key = await unlockWithPassword(keyRef.current, password, metaResponse.salt);
+      const key = await unlockWithPassword(fragment, password, metaResponse.salt);
       setFileKey(key);
       const { decryptMetadata } = await import("../lib/crypto");
       const decrypted = await decryptMetadata(key, metaResponse.meta, metaResponse.metaIv);
@@ -79,7 +81,7 @@ export default function DownloadPage() {
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : "Wrong password");
     }
-  }, [password, metaResponse, dropId]);
+  }, [fragment, password, metaResponse, dropId]);
 
   const handleDownload = useCallback(async () => {
     if (!fileKey || !metaResponse || !dropId) return;
@@ -95,7 +97,10 @@ export default function DownloadPage() {
       triggerDownload(blob, meta.fileName);
       setPhase("done");
     } catch (err) {
-      if (err instanceof ApiError && (err.status === 404 || err.status === 410)) {
+      if (err instanceof ApiError && err.status === 410) {
+        setBurnMessage("This file has reached its download limit and is no longer available.");
+        setPhase("burned");
+      } else if (err instanceof ApiError && err.status === 404) {
         setPhase("burned");
       } else if (err instanceof Error && err.message === "gone") {
         setPhase("burned");
@@ -106,7 +111,7 @@ export default function DownloadPage() {
     }
   }, [fileKey, metaResponse, dropId]);
 
-  if (phase === "burned") return <BurnNotice />;
+  if (phase === "burned") return <BurnNotice message={burnMessage} />;
 
   return (
     <div className="space-y-6 animate-fadeInUp">

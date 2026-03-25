@@ -76,6 +76,7 @@ export async function handleDownload(c: Context<{ Bindings: Env }>) {
     headers: {
       "Content-Type": "application/octet-stream",
       "Content-Length": contentLength.toString(),
+      "Cache-Control": "no-store",
     },
   });
 }

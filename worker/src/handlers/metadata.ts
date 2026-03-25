@@ -24,6 +24,17 @@ export async function handleMetadata(c: Context<{ Bindings: Env }>) {
     return c.json({ error: "gone" }, 404);
   }
 
+  if (kvData.maxDownloads > 0) {
+    const row = await c.env.DB.prepare(
+      "SELECT downloads, max_downloads FROM drops WHERE id = ?"
+    )
+      .bind(id)
+      .first<{ downloads: number; max_downloads: number }>();
+    if (!row || row.downloads >= row.max_downloads) {
+      return c.json({ error: "exhausted" }, 410);
+    }
+  }
+
   return c.json({
     meta: kvData.meta,
     metaIv: kvData.metaIv,

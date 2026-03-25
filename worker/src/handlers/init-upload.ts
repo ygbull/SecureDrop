@@ -11,7 +11,7 @@ export async function handleInitUpload(c: Context<{ Bindings: Env }>) {
   const body = await c.req.json<InitUploadRequest>();
 
   const maxFileSize = parseInt(c.env.MAX_FILE_SIZE, 10);
-  if (!body.fileSize || body.fileSize > maxFileSize) {
+  if (typeof body.fileSize !== "number" || body.fileSize < 0 || body.fileSize > maxFileSize) {
     return c.json({ error: "file_too_large" }, 400);
   }
   if (!VALID_EXPIRY.includes(body.expiry)) {
@@ -23,7 +23,7 @@ export async function handleInitUpload(c: Context<{ Bindings: Env }>) {
   if (!body.totalChunks || body.totalChunks < 1 || body.totalChunks > 50) {
     return c.json({ error: "invalid_total_chunks" }, 400);
   }
-  const expectedChunks = Math.ceil(body.fileSize / PLAINTEXT_CHUNK_SIZE);
+  const expectedChunks = body.fileSize === 0 ? 1 : Math.ceil(body.fileSize / PLAINTEXT_CHUNK_SIZE);
   if (body.totalChunks !== expectedChunks) {
     return c.json({ error: "chunk_count_mismatch" }, 400);
   }

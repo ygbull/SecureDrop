@@ -27,6 +27,18 @@ export interface UploadResult {
   expiresAt: string;
 }
 
+export function validateUploadOptions(opts: {
+  file: File | null;
+  passwordEnabled: boolean;
+  password: string;
+}): string | null {
+  if (!opts.file) return "No file selected";
+  if (opts.passwordEnabled && opts.password.trim().length === 0) {
+    return "Password is required when password protection is enabled";
+  }
+  return null;
+}
+
 async function withRetry<T>(
   fn: () => Promise<T>,
   retries = 3,
@@ -65,7 +77,7 @@ export async function handleUpload(opts: UploadOptions): Promise<UploadResult> {
   let fragmentBytes: Uint8Array;
   let salt: string | undefined;
 
-  if (password) {
+  if (password.trim().length > 0) {
     const saltBytes = crypto.getRandomValues(new Uint8Array(16));
     salt = toBase64Url(saltBytes);
     const wrappingKey = await deriveWrappingKey(password, saltBytes);

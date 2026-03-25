@@ -262,6 +262,12 @@ async function test8_download() {
     await res.text();
     return;
   }
+  const cacheControl = res.headers.get("Cache-Control");
+  if (cacheControl !== "no-store") {
+    fail(name, `expected Cache-Control: no-store, got ${cacheControl}`);
+    await res.arrayBuffer();
+    return;
+  }
   const blob = await res.arrayBuffer();
   if (blob.byteLength !== 1000) {
     fail(name, `expected 1000 bytes, got ${blob.byteLength}`);
@@ -508,6 +514,56 @@ async function test18_downloadReusedToken() {
   await res2.text();
 }
 
+async function test19_initUploadZeroByte() {
+  const name = "init-upload: zero-byte file accepted";
+  const res = await fetch(`${BASE}/init-upload`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...rlHeaders() },
+    body: JSON.stringify({
+      meta: toBase64("fake-encrypted-metadata"),
+      metaIv: toBase64("fake-iv-12byte"),
+      expiry: 86400,
+      maxDownloads: 1,
+      totalChunks: 1,
+      fileSize: 0,
+    }),
+  });
+
+  if (res.status !== 201) {
+    const body = await res.json<{ error: string }>();
+    fail(name, `expected 201, got ${res.status} (error: ${body.error})`);
+    return;
+  }
+
+  const body = await res.json<{ dropId: string; deleteToken: string; expiresAt: string }>();
+  if (!body.dropId || body.dropId.length !== 8) {
+    fail(name, `invalid response body: ${JSON.stringify(body)}`);
+    return;
+  }
+
+  pass(name, `201, dropId=${body.dropId}`);
+}
+
+async function test20_metaExhausted() {
+  const name = "meta: exhausted drop returns 410";
+  const { dropId } = await createAndFinalizeDrop(1);
+
+  await fetch(`${BASE}/claim/${dropId}`, { method: "POST", headers: rlHeaders() });
+
+  const res = await fetch(`${BASE}/meta/${dropId}`, { headers: rlHeaders() });
+  if (res.status !== 410) {
+    const body = await res.text();
+    fail(name, `expected 410, got ${res.status} (body: ${body})`);
+    return;
+  }
+  const body = await res.json<{ error: string }>();
+  if (body.error !== "exhausted") {
+    fail(name, `expected error "exhausted", got "${body.error}"`);
+    return;
+  }
+  pass(name, `410, exhausted`);
+}
+
 async function main() {
   console.log("SecureDrop API Integration Tests\n");
 
@@ -557,6 +613,12 @@ async function main() {
   await test16_downloadNoToken();
   await test17_downloadInvalidToken();
   await test18_downloadReusedToken();
+
+  // Test 19: Zero-byte file
+  await test19_initUploadZeroByte();
+
+  // Test 20: Exhausted metadata
+  await test20_metaExhausted();
 
   console.log(`\n${passed} passed, ${failed} failed`);
   process.exit(failed > 0 ? 1 : 0);

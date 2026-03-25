@@ -1,4 +1,4 @@
-export default function BurnNotice() {
+export default function BurnNotice({ message }: { message?: string }) {
   return (
     <div className="text-center py-16 animate-fadeInDeblur">
       <div className="inline-block mb-6">
@@ -20,7 +20,7 @@ export default function BurnNotice() {
       <h1 className="text-2xl font-semibold text-text-primary mb-2">Gone</h1>
 
       <p className="text-text-secondary max-w-sm mx-auto">
-        This file has been destroyed. It was either downloaded or expired.
+        {message || "This file has been destroyed. It was either downloaded or expired."}
       </p>
 
       <div className="w-20 h-px bg-border mx-auto my-8" />
